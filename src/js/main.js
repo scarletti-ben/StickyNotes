@@ -3,7 +3,8 @@
 // =========================================================
 
 let page = document.getElementById("page");
-const notes = {
+let cloudURL = "https://jsonblob.com/api/jsonBlob/1338142578419359744";
+var notes = {
     1: {
         title: "test1",
         created: '2024-02-08T14:45:30.123Z',
@@ -101,49 +102,119 @@ function createNote(data, id) {
     let title = createDiv({ className: "note-title", textContent: data.title }, note);
     let content = createDiv({ className: "note-content", textContent: data.content }, note);
     title.contentEditable = true;
-    // title.tabIndex = -1;
-    // title.tabIndex = 0;
     content.contentEditable = true;
-    // content.tabIndex = -1;
-    // content.tabIndex = 0;
     note.setAttribute('data-id', id);
     title.addEventListener("focusout", () => {
-        saveNoteElement(container);
+        saveNoteContainer(container);
     });
     content.addEventListener("focusout", () => {
-        saveNoteElement(container);
+        saveNoteContainer(container);
     });
-    // content.addEventListener("keydown", (e) => {
-    //     if (e.key === "Enter") {
-    //         setTimeout(() => {
-                const lineHeight = parseInt(getComputedStyle(content).lineHeight, 10);
-                console.log(lineHeight);
-    //             note.scrollTop += 500;
-    //         }, 0);
-    //     }
-    // });
     return note
 }
 
 // Save a note element, keep date created the same
-function saveNoteElement(noteContainer) {
+function saveNoteContainer(noteContainer, modifying = true) {
     let noteElement = noteContainer.children[0];
     let id = noteElement.dataset.id;
     let title = noteElement.querySelector(".note-title").textContent;
     let content = noteElement.querySelector(".note-content").textContent;
-    let date = getDateString();
-    let noteData = {
-        title: title,
-        content: content,
-        modified: date
-    };
-    Object.assign(notes[id], noteData);
-    console.log(`Saved note ${id} at ${date}`);
+    let noteData = notes[id];
+    noteData.title = title;
+    noteData.content = content;
+    if (modifying) {
+        let date = getDateString();
+        noteData.modified = date;
+        console.log(`Modified note ${id} at ${date}`);
+    }
+    console.log(`Saved note ${id}`);
 }
 
-// Save / Push all notes
-function pushAllNotesLocal() {
+// =========================================================
+// Push and Pull Functionality
+// =========================================================
 
+function pushWindowToSession() {
+    let noteContainers = document.querySelectorAll(".note-container");
+    let n = 0;
+    for (const noteContainer of noteContainers) {
+        saveNoteContainer(noteContainer, false);
+        n++;
+    }
+    console.log("Window pushed to session");
+}
+
+function pushSessionToLocal() {
+    localStorage.setItem('savedNotes', JSON.stringify(notes));
+    console.log("Session pushed to local");
+}
+
+function pushWindowToLocal() {
+    pushWindowToSession();
+    pushSessionToLocal();
+    console.log("∴ Window pushed to local")
+}
+
+function pullLocalToSession() {
+    let saved = localStorage.getItem('savedNotes');
+    notes = JSON.parse(saved);
+    console.log("Local pulled to session");
+}
+
+function pullSessionToWindow() {
+    const noteContainers = page.querySelectorAll('.note-container');
+    noteContainers.forEach(note => note.remove());
+    for (const [id, noteData] of Object.entries(notes)) {
+        createNote(noteData, id);
+    }
+    console.log("Session pulled to window");
+}
+
+function pullLocalToWindow() {
+    pullLocalToSession();
+    pullSessionToWindow();
+    console.log("∴ Local pulled to window")
+}
+
+async function pushLocalToCloud() {
+    let json = localStorage.getItem('savedNotes');
+    const response = await fetch(cloudURL, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: json
+    });
+    if (response.ok) {
+        console.log(`Local pushed to cloud`)
+    }
+}
+
+async function pushWindowToCloud() {
+    pushWindowToSession();
+    pushSessionToLocal();
+    await pushLocalToCloud();
+    console.log("∴ Window pushed to cloud")
+}
+
+async function pullCloudToLocal() {
+    const response = await fetch(cloudURL);
+    if (response.ok) {
+        let data = await response.text();
+        localStorage.setItem('savedNotes', data);
+        console.log("Cloud pulled to local");
+    }
+}
+
+async function pullCloudToWindow() {
+    await pullCloudToLocal();
+    pullLocalToSession();
+    pullSessionToWindow();
+    console.log("∴ Cloud pulled to window")
+}
+
+
+// Navigate to the raw JSON link
+function viewCloud() {
+    window.open(cloudURL, '_blank');
 }
 
 // =========================================================
@@ -182,31 +253,56 @@ class ToolbarContainer {
 // Create the ToolBar container and populate with buttons / functionality
 function populateToolbar() {
     let tools = new ToolbarContainer();
-    tools.createButton(0, "folder", "A1");
-    tools.createButton(0, "add", "A2");
-    tools.createButton(1, "remove", "B1");
-    tools.createButton(1, "delete", "B1");
-    tools.createButton(1, "close", "B1");
-    tools.createButton(1, "sort_by_alpha", "B1");
-    tools.createButton(2, "edit", "B1");
-    tools.createButton(2, "sort", "B1");
-    tools.createButton(2, "logout", "B1");
-    tools.createButton(4, "link", "Show Notes JSON", () => showNotes());
-    tools.createButton(2, "check", "B1");
-}
+    tools.createButton(0, "add", "Add New Note", () => createBlankNote());
+    tools.createButton(0, "link", "View Cloud", () => viewCloud());
+    // tools.createButton(0, "link", "Show Notes JSON", () => showNotes());
 
-// Initialisation function
-function init() {
-    for (const [id, noteData] of Object.entries(notes)) {
-        let note = createNote(noteData, id);
-        // note.addEventListener("click", () => removeNoteByElement(note));
-    }
+    tools.createButton(1, "transition_push", "Push Window to Session", () => pushWindowToSession());
+    tools.createButton(1, "hard_drive", "Push Session to Local", () => pushSessionToLocal());
+
+    tools.createButton(1, "system_update_alt", "Pull Local to Session", () => pullLocalToSession());
+    tools.createButton(1, "system_update", "Pull Session to Window", () => pullSessionToWindow());
+
+    tools.createButton(2, "save", "Push Window to Local", () => pushWindowToLocal());
+    tools.createButton(2, "folder", "Pull Local to Window", () => pullLocalToWindow());
+
+
+    tools.createButton(3, "cloud_upload", "Push Local to Cloud", () => pushLocalToCloud());
+    tools.createButton(3, "cloud_download", "Pull Cloud to Local", () => pullCloudToLocal());
+
+    tools.createButton(4, "cloud_upload", "Push Window to Cloud", () => pushWindowToCloud());
+    tools.createButton(4, "cloud_download", "Pull Cloud to Window", () => pullCloudToWindow());
+
+    // tools.createButton(4, "folder", "A1");
+    // tools.createButton(4, "save", "A1");
+    // tools.createButton(4, "remove", "A1");
+    // tools.createButton(4, "delete", "A1");
+    // tools.createButton(4, "close", "A1");
+    // tools.createButton(4, "sort_by_alpha", "A1");
+    // tools.createButton(4, "edit", "A1");
+    // tools.createButton(4, "sort", "A1");
+    // tools.createButton(4, "logout", "A1");
+    // tools.createButton(4, "check", "A1");
 }
 
 // Initialisation function
 function main() {
     populateToolbar();
-    init();
+    pullCloudToWindow();
+
+    async function save() {
+        await pushWindowToCloud();
+        let message = `Notes saved to cloud`;
+        alert(message);
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            save();
+        }
+    })
+
 };
 
 // =========================================================
