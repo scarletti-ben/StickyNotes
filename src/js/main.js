@@ -91,7 +91,6 @@ function removeNoteByElement(note) {
         setTimeout(() => container.remove(), 100);
     }, 100);
 
-
     // note.parentNode.remove();
 }
 
@@ -105,9 +104,18 @@ function createNote(data, id) {
     let container = createDiv({ className: "note-container" }, page)
     let note = createDiv({ className: "note" }, container);
     let title = createDiv({ className: "note-title", textContent: data.title }, note);
+    title.spellcheck = false;
+
     // let content = createDiv({ className: "note-content", textContent: data.content }, note);
     // let content = createPre({ className: "note-content", textContent: data.content }, note);
     let content = createPre({ className: "note-content"}, note);
+    title.addEventListener("keydown", (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            content.focus()
+        }
+    })
+    content.spellcheck = false;
     content.innerHTML = data.content;
     title.contentEditable = true;
     content.contentEditable = true;

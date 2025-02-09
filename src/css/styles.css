@@ -74,6 +74,7 @@ body {
     padding: 32px 32px;
     gap: 16px;
     flex-wrap: wrap;
+    user-select: none;
     overflow: auto;
     scrollbar-gutter: stable both-edges;
     box-shadow: inset 0 0 0 var(--debug-outline) orange;
@@ -84,6 +85,7 @@ body {
     height: var(--note-height);
     width: var(--note-width);
     box-sizing: border-box;
+    user-select: none;
     background-color: transparent;
     box-shadow: inset 0 0 0 var(--debug-outline) cyan;
 }
@@ -113,6 +115,7 @@ body {
     right: 0;
     display: flex;
     margin: 24px;
+    user-select: none;
     flex-direction: column-reverse;
     background-color: red;
     overflow: hidden;
@@ -131,6 +134,7 @@ body {
     flex-grow: 0;
     display: flex;
     overflow: hidden;
+    user-select: none;
     flex-direction: row-reverse;
     box-shadow: inset 0 0 0 var(--debug-outline) teal;
 }
@@ -158,6 +162,8 @@ body {
     box-sizing: border-box;
     box-shadow: inset 0 0 0 var(--debug-outline) orange;
     font-size: 16px;
+    -webkit-text-autocorrect: none;
+    -webkit-user-modify: read-write-plaintext-only;
     margin: 0px 0px 8px 0px;
     box-shadow: inset 0 -1px grey;
 }
@@ -173,6 +179,8 @@ body {
     font-size: 10px;
     flex-grow: 1;
     overflow-y: auto;
+    -webkit-text-autocorrect: none;
+    -webkit-user-modify: read-write-plaintext-only;
     white-space: pre-wrap;
     word-wrap: break-word;
     box-shadow: inset 0 0 0 var(--debug-outline) olivedrab;
@@ -234,7 +242,13 @@ body {
     }
     
     .note-container {
-        width: calc(var(--note-width) * 0.8);
-        height: calc(var(--note-height) * 0.8);
+        width: calc(var(--note-width) * 1.6);
+        height: calc(var(--note-height) * 1.6);
+    }
+    .note-content {
+        font-size: 14px;
+    }
+    .note-title {
+        font-size: 18px;
     }
 }
