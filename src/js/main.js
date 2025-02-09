@@ -297,24 +297,25 @@ class ToolbarContainer {
 // Create the ToolBar container and populate with buttons / functionality
 function populateToolbar() {
     let tools = new ToolbarContainer();
-    tools.createButton(0, "add", "Add New Note", () => createBlankNote());
+    tools.createButton(0, "keyboard_arrow_up", "Add New Note", null);
+    tools.createButton(1, "add", "Add New Note", () => createBlankNote());
 
     // tools.createButton(0, "link", "Show Notes JSON", () => showNotes());
-    tools.createButton(1, "cloud_upload", "Save to Cloud", () => WindowToCloud());
-    tools.createButton(1, "cloud_download", "Load from Cloud", () => CloudToWindow());
-    tools.createButton(1, "save", "Save to Device", () => WindowToDevice());
-    tools.createButton(1, "folder", "Load from Device", () => pullDeviceToWindow());
-    tools.createButton(1, "link", "View Cloud", () => viewCloud());
+    tools.createButton(2, "cloud_upload", "Save to Cloud", () => WindowToCloud());
+    tools.createButton(2, "cloud_download", "Load from Cloud", () => CloudToWindow());
+    tools.createButton(2, "save", "Save to Device", () => WindowToDevice());
+    tools.createButton(2, "folder", "Load from Device", () => pullDeviceToWindow());
+    tools.createButton(2, "link", "View Cloud", () => viewCloud());
 
-    tools.createButton(2, "lock_person", "Debug Tools", () => alert("debug"));
-    tools.createButton(2, "transition_push", "Window to Session", () => WindowToSession());
-    tools.createButton(2, "hard_drive", "Session to Local", () => SessionToLocal());
-    tools.createButton(2, "system_update_alt", "Local to Session", () => LocalToSession());
-    tools.createButton(2, "system_update", "Session to Window", () => SessionToWindow());
-    tools.createButton(2, "save", "Window to Local", () => WindowToLocal());
-    tools.createButton(2, "folder", "Local to Window", () => LocalToWindow());
-    tools.createButton(2, "cloud_upload", "Local to Cloud", () => LocalToCloud());
-    tools.createButton(2, "cloud_download", "Cloud to Local", () => CloudToLocal());
+    tools.createButton(3, "lock_person", "Debug Tools", () => alert("debug"));
+    tools.createButton(3, "transition_push", "Window to Session", () => WindowToSession());
+    tools.createButton(3, "hard_drive", "Session to Local", () => SessionToLocal());
+    tools.createButton(3, "system_update_alt", "Local to Session", () => LocalToSession());
+    tools.createButton(3, "system_update", "Session to Window", () => SessionToWindow());
+    tools.createButton(3, "save", "Window to Local", () => WindowToLocal());
+    tools.createButton(3, "folder", "Local to Window", () => LocalToWindow());
+    tools.createButton(3, "cloud_upload", "Local to Cloud", () => LocalToCloud());
+    tools.createButton(3, "cloud_download", "Cloud to Local", () => CloudToLocal());
 
 
 
