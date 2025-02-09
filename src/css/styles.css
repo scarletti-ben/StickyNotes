@@ -154,7 +154,7 @@ body {
 }
 
 .note-title {
-    /* padding-left: 8px; */
+    padding-right: 18px;
     box-sizing: border-box;
     box-shadow: inset 0 0 0 var(--debug-outline) orange;
     font-size: 16px;
@@ -172,7 +172,9 @@ body {
 .note-content {
     font-size: 10px;
     flex-grow: 1;
-    overflow: auto;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
     box-shadow: inset 0 0 0 var(--debug-outline) olivedrab;
     /* box-shadow: inset 0 0 0 1px olivedrab; */
     line-height: normal;
