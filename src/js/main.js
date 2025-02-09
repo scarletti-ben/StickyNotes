@@ -87,7 +87,16 @@ function removeNoteById(noteId) {
 // Remove a note by its element
 function removeNoteByElement(note) {
     delete notes[note.dataset.id];
-    note.parentNode.remove();
+    let container = note.parentNode;
+
+    note.style.transition = "background 0.1s";
+    note.style.background = "rgba(0, 0, 0, 0.2)";
+    setTimeout(() => {
+        setTimeout(() => container.remove(), 100);
+    }, 100);
+
+
+    // note.parentNode.remove();
 }
 
 // Show current notes as a stringified alert
@@ -110,6 +119,10 @@ function createNote(data, id) {
     content.addEventListener("focusout", () => {
         saveNoteContainer(container);
     });
+
+    let button = createDiv({ className: "note-button" }, container, () => removeNoteByElement(note));
+    createDiv({ className: "material-symbols-outlined small", textContent: 'more_horiz' }, button)
+
     return note
 }
 
@@ -128,55 +141,60 @@ function saveNoteContainer(noteContainer, modifying = true) {
         console.log(`Modified note ${id} at ${date}`);
     }
     console.log(`Saved note ${id}`);
+    SessionToLocal();
+}
+
+function viewCloud() {
+    window.open(cloudURL, '_blank');
 }
 
 // =========================================================
 // Push and Pull Functionality
 // =========================================================
 
-function pushWindowToSession() {
+function WindowToSession() {
     let noteContainers = document.querySelectorAll(".note-container");
     let n = 0;
     for (const noteContainer of noteContainers) {
         saveNoteContainer(noteContainer, false);
         n++;
     }
-    console.log("Window pushed to session");
+    console.log("Window to session");
 }
 
-function pushSessionToLocal() {
+function SessionToLocal() {
     localStorage.setItem('savedNotes', JSON.stringify(notes));
-    console.log("Session pushed to local");
+    console.log("Session to local");
 }
 
-function pushWindowToLocal() {
-    pushWindowToSession();
-    pushSessionToLocal();
-    console.log("∴ Window pushed to local")
+function WindowToLocal() {
+    WindowToSession();
+    SessionToLocal();
+    console.log("∴ Window to local")
 }
 
-function pullLocalToSession() {
+function LocalToSession() {
     let saved = localStorage.getItem('savedNotes');
     notes = JSON.parse(saved);
-    console.log("Local pulled to session");
+    console.log("Local to session");
 }
 
-function pullSessionToWindow() {
+function SessionToWindow() {
     const noteContainers = page.querySelectorAll('.note-container');
     noteContainers.forEach(note => note.remove());
     for (const [id, noteData] of Object.entries(notes)) {
         createNote(noteData, id);
     }
-    console.log("Session pulled to window");
+    console.log("Session to window");
 }
 
-function pullLocalToWindow() {
-    pullLocalToSession();
-    pullSessionToWindow();
-    console.log("∴ Local pulled to window")
+function LocalToWindow() {
+    LocalToSession();
+    SessionToWindow();
+    console.log("∴ Local to window")
 }
 
-async function pushLocalToCloud() {
+async function LocalToCloud() {
     let json = localStorage.getItem('savedNotes');
     const response = await fetch(cloudURL, {
         method: "PUT",
@@ -184,37 +202,63 @@ async function pushLocalToCloud() {
         body: json
     });
     if (response.ok) {
-        console.log(`Local pushed to cloud`)
+        console.log(`Local to cloud`)
     }
 }
 
-async function pushWindowToCloud() {
-    pushWindowToSession();
-    pushSessionToLocal();
-    await pushLocalToCloud();
-    console.log("∴ Window pushed to cloud")
+async function WindowToCloud() {
+    WindowToSession();
+    SessionToLocal();
+    await LocalToCloud();
+    console.log("∴ Window to cloud")
 }
 
-async function pullCloudToLocal() {
+async function CloudToLocal() {
     const response = await fetch(cloudURL);
     if (response.ok) {
         let data = await response.text();
         localStorage.setItem('savedNotes', data);
-        console.log("Cloud pulled to local");
+        console.log("Cloud to local");
     }
 }
 
-async function pullCloudToWindow() {
-    await pullCloudToLocal();
-    pullLocalToSession();
-    pullSessionToWindow();
-    console.log("∴ Cloud pulled to window")
+async function CloudToWindow() {
+    await CloudToLocal();
+    LocalToSession();
+    SessionToWindow();
+    console.log("∴ Cloud to window")
 }
 
+function pullDeviceToWindow() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = () => {
+        const file = input.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                let result = reader.result;
+                notes = JSON.parse(result);
+                SessionToWindow();
+            };
+            reader.readAsText(file);
+        }
+    };
+    input.click();
+}
 
-// Navigate to the raw JSON link
-function viewCloud() {
-    window.open(cloudURL, '_blank');
+function WindowToDevice() {
+    WindowToSession();
+    SessionToLocal();
+    let name = getDateString() + '.json'
+    let content = JSON.stringify(notes, null, 2)
+    const blob = new Blob([content], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(link.href);
 }
 
 // =========================================================
@@ -254,24 +298,27 @@ class ToolbarContainer {
 function populateToolbar() {
     let tools = new ToolbarContainer();
     tools.createButton(0, "add", "Add New Note", () => createBlankNote());
-    tools.createButton(0, "link", "View Cloud", () => viewCloud());
+
     // tools.createButton(0, "link", "Show Notes JSON", () => showNotes());
+    tools.createButton(1, "cloud_upload", "Save to Cloud", () => WindowToCloud());
+    tools.createButton(1, "cloud_download", "Load from Cloud", () => CloudToWindow());
+    tools.createButton(1, "save", "Save to Device", () => WindowToDevice());
+    tools.createButton(1, "folder", "Load from Device", () => pullDeviceToWindow());
+    tools.createButton(1, "link", "View Cloud", () => viewCloud());
 
-    tools.createButton(1, "transition_push", "Push Window to Session", () => pushWindowToSession());
-    tools.createButton(1, "hard_drive", "Push Session to Local", () => pushSessionToLocal());
+    tools.createButton(2, "lock_person", "Debug Tools", () => alert("debug"));
+    tools.createButton(2, "transition_push", "Window to Session", () => WindowToSession());
+    tools.createButton(2, "hard_drive", "Session to Local", () => SessionToLocal());
+    tools.createButton(2, "system_update_alt", "Local to Session", () => LocalToSession());
+    tools.createButton(2, "system_update", "Session to Window", () => SessionToWindow());
+    tools.createButton(2, "save", "Window to Local", () => WindowToLocal());
+    tools.createButton(2, "folder", "Local to Window", () => LocalToWindow());
+    tools.createButton(2, "cloud_upload", "Local to Cloud", () => LocalToCloud());
+    tools.createButton(2, "cloud_download", "Cloud to Local", () => CloudToLocal());
 
-    tools.createButton(1, "system_update_alt", "Pull Local to Session", () => pullLocalToSession());
-    tools.createButton(1, "system_update", "Pull Session to Window", () => pullSessionToWindow());
-
-    tools.createButton(2, "save", "Push Window to Local", () => pushWindowToLocal());
-    tools.createButton(2, "folder", "Pull Local to Window", () => pullLocalToWindow());
 
 
-    tools.createButton(3, "cloud_upload", "Push Local to Cloud", () => pushLocalToCloud());
-    tools.createButton(3, "cloud_download", "Pull Cloud to Local", () => pullCloudToLocal());
 
-    tools.createButton(4, "cloud_upload", "Push Window to Cloud", () => pushWindowToCloud());
-    tools.createButton(4, "cloud_download", "Pull Cloud to Window", () => pullCloudToWindow());
 
     // tools.createButton(4, "folder", "A1");
     // tools.createButton(4, "save", "A1");
@@ -288,10 +335,10 @@ function populateToolbar() {
 // Initialisation function
 function main() {
     populateToolbar();
-    pullCloudToWindow();
+    CloudToWindow();
 
     async function save() {
-        await pushWindowToCloud();
+        await WindowToCloud();
         let message = `Notes saved to cloud`;
         alert(message);
     }
@@ -302,6 +349,7 @@ function main() {
             save();
         }
     })
+
 
 };
 
