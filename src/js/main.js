@@ -350,9 +350,12 @@ function main() {
     populateToolbar();
     // CloudToWindow();
 
-    LocalToWindow();
-
-    // SessionToWindow();
+    if (localStorage.getItem('savedNotes') !== null) {
+        LocalToWindow();
+    }
+    else {
+        SessionToWindow();
+    }
 
     // async function save() {
     //     await WindowToCloud();
