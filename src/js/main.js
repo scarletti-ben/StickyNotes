@@ -3,8 +3,9 @@
 // =========================================================
 
 let page = document.getElementById("page");
+let cloudBase = "https://jsonblob.com/api/jsonBlob/"
 let cloudURL = "https://jsonblob.com/api/jsonBlob/1338142578419359744";
-var notes = {
+var defaultNotes = {
     1: {
         title: "Welcome to StickyNotes",
         created: '2024-02-08T14:45:30.123Z',
@@ -12,6 +13,7 @@ var notes = {
         content: `<div><span style="background-color: var(--note-colour); color: var(--foreground-colour); font-family: var(--font-family); font-weight: var(--font-weight);">- Notes flash when saved</span></div><div>- Open toolbar via ^ button</div><div>- Dele<span style="background-color: var(--note-colour); color: var(--foreground-colour); font-family: var(--font-family); font-weight: var(--font-weight);">te note via x button</span></div><div><br></div><div>Autosaves Happen:</div><div>- When you switch notes</div>- Every 30s`
     },
 };
+var notes = JSON.parse(JSON.stringify(defaultNotes));
 
 // =========================================================
 // Functionality
@@ -285,6 +287,50 @@ function WindowToDevice() {
     URL.revokeObjectURL(link.href);
 }
 
+// !========================================================
+// ! Experimental
+// !========================================================
+
+const copyToClipboard = async (text) => {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch (err) {
+        console.error("Failed to copy:", err);
+    }
+};
+
+function resetAllNotes() {
+    if (confirm('Reset is permanent, press cancel if this was a mistake')) {
+        console.log('Pressed OK');
+        notes = JSON.parse(JSON.stringify(defaultNotes));
+        SessionToWindow();
+      } else {
+        console.log('Pressed Cancel');
+      }
+}
+
+async function getOneTimeLink() {
+    const response = await fetch(cloudBase, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(notes),
+    });
+    if (response.status === 201) {
+        const location = response.headers.get('Location');
+        const userID = location.split('/').pop();
+        // return `${cloudBase}${userID}`;
+        return `https://scarletti-ben.github.io/StickyNotes/index.html?otc=${userID}`;
+    }
+}
+
+function checkURLParameters() {
+    const params = new URLSearchParams(window.location.search);
+    const value = params.get("otl");
+    if (value && /^\d+$/.test(value)) {
+        alert(`Detected number: ${value}`);
+    }
+}
+
 // =========================================================
 // Toolbar Class
 // =========================================================
@@ -329,6 +375,16 @@ function populateToolbar() {
     // tools.createButton(2, "cloud_download", "Load from Cloud", () => CloudToWindow());
     tools.createButton(2, "save", "Save to Device", () => WindowToDevice());
     tools.createButton(3, "folder", "Load from Device", () => pullDeviceToWindow());
+    tools.createButton(4, "delete_history", "Reset All Notes", () => resetAllNotes());
+    tools.createButton(5, "cloud_upload", "Share Notes", async () => {
+        let oneTimeLink = await getOneTimeLink();
+        if (copyToClipboard(oneTimeLink)) {
+            alert(`One time link copied to clipboard:\n${oneTimeLink}`);
+        }
+        else {
+            alert(`Clipboard access denied, copy this link: ${oneTimeLink}`);
+        }
+    });
     // tools.createButton(2, "link", "View Cloud", () => viewCloud());
 
     // tools.createButton(3, "lock_person", "Debug Tools", () => alert("debug"));
@@ -384,7 +440,9 @@ function main() {
         }
     })
 
-    setInterval(save, 30000); 
+    setInterval(save, 30000);
+
+    // resetAllNotes();
 
 };
 
