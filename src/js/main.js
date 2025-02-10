@@ -270,6 +270,7 @@ function resetAllNotes() {
     if (confirm('Reset is permanent, press cancel if this was a mistake')) {
         console.log('Pressed OK');
         notes = JSON.parse(JSON.stringify(defaultNotes));
+        SessionToLocal();
         SessionToWindow();
     } else {
         console.log('Pressed Cancel');
@@ -362,7 +363,7 @@ function main() {
     let oneTimeLink = checkURLParameters();
     if (oneTimeLink) {
         let message = 'Cloud load removes current notes, press Cancel if this was a mistake';
-        
+
         if (confirm(message)) {
             console.log('Pressed OK');
             let url = `${cloudBase}${oneTimeLink}`;
