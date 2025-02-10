@@ -4,19 +4,22 @@
 
 let page = document.getElementById("page");
 let mainButton;
+let tools;
+let expanding = false;
 let cloudBase = "https://jsonblob.com/api/jsonBlob/"
 var defaultNotes = {
     1: {
         title: "Welcome to StickyNotes",
         created: '2024-02-08T14:45:30.123Z',
         modified: '2024-02-08T14:45:30.123Z',
-        content: `<div>- Open toolbar via ^ button
+        content: `- Open toolbar via ^ button
 - Delete note via x button
 
 Autosave Information:
 - ^ flashes when saving
 - Saves if switching notes
-- Saves every 30s</div>`
+- Saves every 30s
+- Can manually save via menu`
     },
 };
 var notes = JSON.parse(JSON.stringify(defaultNotes));
@@ -37,9 +40,9 @@ function createDiv(options = { className: "", textContent: "", id: "", title: ""
     return element;
 }
 
-// Utility function for quick creation of a pre element
-function createPre(options = { className: "", textContent: "", id: "", title: "" }, parent = null, onClick = null) {
-    let element = document.createElement("pre");
+// Utility function for quick creation of element
+function createTextArea(options = { className: "", textContent: "", id: "", title: "" }, parent = null, onClick = null) {
+    let element = document.createElement("textarea");
     if (options.className) element.className = options.className;
     if (options.textContent) element.textContent = options.textContent;
     if (options.id) element.id = options.id;
@@ -107,7 +110,10 @@ function createNote(data, id) {
     let note = createDiv({ className: "note" }, container);
     let title = createDiv({ className: "note-title", textContent: data.title }, note);
     title.spellcheck = false;
-    let content = createPre({ className: "note-content" }, note);
+    let content = createTextArea({ className: "note-content" }, note);
+
+
+
     title.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -115,10 +121,27 @@ function createNote(data, id) {
         }
     })
     content.spellcheck = false;
-    content.innerHTML = data.content;
+    content.value = data.content;
     title.contentEditable = true;
     content.contentEditable = true;
     note.setAttribute('data-id', id);
+
+    note.addEventListener("focusin", () => {
+        if (expanding){
+            container.classList.toggle('expanded');
+            tools.element.classList.toggle('hidden');
+        }
+        button.classList.toggle('hidden');
+    });
+
+    note.addEventListener("focusout", () => {
+        if (expanding){
+            container.classList.toggle('expanded');
+            tools.element.classList.toggle('hidden');
+        }
+        button.classList.toggle('hidden');
+    });
+
     title.addEventListener("focusout", () => {
         saveNoteContainer(container);
         SessionToLocal();
@@ -142,7 +165,7 @@ function saveNoteContainer(noteContainer, modifying = true) {
     let noteElement = noteContainer.children[0];
     let id = noteElement.dataset.id;
     let title = noteElement.querySelector(".note-title").textContent;
-    let content = noteElement.querySelector(".note-content").innerHTML;
+    let content = noteElement.querySelector(".note-content").value;
     // console.log(content);
     let noteData = notes[id];
     noteData.title = title;
@@ -207,20 +230,38 @@ function LocalToWindow() {
 }
 
 async function CloudToLocal(url) {
-    const response = await fetch(url);
-    if (response.ok) {
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.warn(`Fetch failed with status: ${response.status}`);
+            let id = url.split('/').at(-1);
+            let message = `The one time link below is not valid:\n${url}\n\nIt may have been used before, try generating a new link`;
+            alert(message);
+            return false;
+        }
         let data = await response.text();
         localStorage.setItem('savedNotes', data);
         console.log("Cloud to local");
+        return true;
+    } catch (error) {
+        console.error("Error fetching or saving data:", error);
+        return false;
     }
 }
 
 async function CloudToWindow(url) {
-    await CloudToLocal(url);
-    LocalToSession();
-    SessionToWindow();
-    // console.log(JSON.stringify(notes, null, 2));
-    console.log("∴ Cloud to window");
+    let success = await CloudToLocal(url);
+    if (success) {
+        LocalToSession();
+        SessionToWindow();
+        // console.log(JSON.stringify(notes, null, 2));
+        console.log("∴ Cloud to window");
+        return true
+    }
+    else {
+        console.log("Error from CloudToLocal found in CloudToWindow");
+    }
+
 }
 
 // function DeviceToWindow() {
@@ -316,10 +357,10 @@ async function getOneTimeLink() {
         // let link = `https://scarletti-ben.github.io/StickyNotes/?otl=${userID}`;
         const pathname = window.location.pathname;
         const origin = window.location.origin;
-        alert(pathname);
-        alert(origin);
+        // alert(pathname);
+        // alert(origin);
         let link = `${origin}${pathname}?otl=${userID}`
-        alert(link)
+        // alert(link);
         return link;
     }
 }
@@ -374,7 +415,7 @@ class ToolbarContainer {
 
 // Create the ToolBar container and populate with buttons / functionality
 function populateToolbar() {
-    let tools = new ToolbarContainer();
+    tools = new ToolbarContainer();
     tools.createButton(0, "keyboard_arrow_up", null, null);
     tools.createButton(1, "add", "Add New Note", () => createBlankNote());
     tools.createButton(2, "save", "Manual Save", () => save());
@@ -394,10 +435,11 @@ function populateToolbar() {
             alert(`Clipboard access denied, copy this link: ${oneTimeLink}`);
         }
     });
+    tools.createButton(7, "open_in_full", "Toggle Expanding Notes", () => expanding = !expanding);
 }
 
 // Initialisation function
-function main() {
+async function main() {
 
     populateToolbar();
 
@@ -411,13 +453,16 @@ function main() {
             console.log('Pressed OK');
             let url = `${cloudBase}${oneTimeLink}`;
             console.log(url);
-            CloudToWindow(url);
-            WindowToLocal();
-            if (destroyCloud(url)) {
-                console.log(`OTL ${url} destroyed`)
-            }
-            else {
-                console.log(`Error: OTL ${url} not destroyed`)
+            let success = await CloudToWindow(url);
+            if (success) {
+                WindowToLocal();
+                let destroyed = await destroyCloud(url);
+                if (destroyed) {
+                    console.log(`OTL ${url} destroyed`)
+                }
+                else {
+                    console.log(`Error: OTL ${url} not destroyed`)
+                }
             }
         } else {
             console.log('Pressed Cancel');
@@ -435,8 +480,6 @@ function main() {
     else {
         SessionToWindow();
     }
-
-
 
     document.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.key === 's') {
@@ -456,6 +499,8 @@ function main() {
             toolbarContainer.classList.toggle('open');
         }
     });
+
+
 
     setInterval(save, 30000);
 

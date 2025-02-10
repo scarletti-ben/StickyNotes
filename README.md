@@ -29,8 +29,10 @@ Reduced functionality to reduce visual clutter and be fit for sharing, and alter
 - ~~Toggle ^ on click (for mobile) and add flip~~
 - ~~User select empty somewhere on page~~
 - ~~Add a manual sync button~~
-- Have GitHub pages not be hardcoded for OTL
+- ~~Have GitHub pages not be hardcoded for OTL~~
+- ~~Handle failed OTLs~~
+- ~~Disable stylying for `pre` innerHTMl~~
+- ~~Fullscreen a note functionality~~
 
 # Possible TODO
-- Disable stylying for `pre` innerHTMl
 - Make lite an offshoot url of main site
