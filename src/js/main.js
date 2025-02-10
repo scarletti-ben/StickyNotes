@@ -110,7 +110,7 @@ function createNote(data, id) {
 
     // let content = createDiv({ className: "note-content", textContent: data.content }, note);
     // let content = createPre({ className: "note-content", textContent: data.content }, note);
-    let content = createPre({ className: "note-content"}, note);
+    let content = createPre({ className: "note-content" }, note);
     title.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -304,9 +304,9 @@ function resetAllNotes() {
         console.log('Pressed OK');
         notes = JSON.parse(JSON.stringify(defaultNotes));
         SessionToWindow();
-      } else {
+    } else {
         console.log('Pressed Cancel');
-      }
+    }
 }
 
 async function getOneTimeLink() {
@@ -319,7 +319,7 @@ async function getOneTimeLink() {
         const location = response.headers.get('Location');
         const userID = location.split('/').pop();
         // return `${cloudBase}${userID}`;
-        return `https://scarletti-ben.github.io/StickyNotes/index.html?otl=${userID}`;
+        return `https://scarletti-ben.github.io/StickyNotes/index?otl=${userID}`;
     }
 }
 
@@ -327,7 +327,7 @@ function checkURLParameters() {
     const params = new URLSearchParams(window.location.search);
     const value = params.get("otl");
     if (value && /^\d+$/.test(value)) {
-        alert(`Detected number: ${value}`);
+        return value;
     }
 }
 
@@ -412,8 +412,20 @@ function populateToolbar() {
 // Initialisation function
 function main() {
 
-    checkURLParameters();
-
+    let oneTimeLink = checkURLParameters();
+    if (oneTimeLink) {
+        if (confirm('Cloud load removes current notes, press Cancel if this was a mistake')) {
+            console.log('Pressed OK');
+            alert('Pressed OK');
+        } else {
+            console.log('Pressed Cancel');
+            alert('Pressed Cancel');
+        }
+        let currentURL = window.location.href;
+        console.log(currentURL);
+        alert(currentURL);
+    }
+    
     populateToolbar();
     // CloudToWindow();
 
@@ -447,7 +459,7 @@ function main() {
 
     // resetAllNotes();
 
-    
+
 
 };
 
