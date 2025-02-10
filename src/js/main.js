@@ -85,15 +85,12 @@ function removeNoteById(noteId) {
 // Remove a note by its element
 function removeNoteByElement(note) {
     delete notes[note.dataset.id];
-    let container = note.parentNode;
-
     note.style.transition = "background 0.1s";
     note.style.background = "rgba(0, 0, 0, 0.2)";
     setTimeout(() => {
-        setTimeout(() => container.remove(), 100);
+        setTimeout(() => note.parentNode.remove(), 100);
     }, 100);
 
-    // note.parentNode.remove();
 }
 
 // Show current notes as a stringified alert
@@ -107,9 +104,6 @@ function createNote(data, id) {
     let note = createDiv({ className: "note" }, container);
     let title = createDiv({ className: "note-title", textContent: data.title }, note);
     title.spellcheck = false;
-
-    // let content = createDiv({ className: "note-content", textContent: data.content }, note);
-    // let content = createPre({ className: "note-content", textContent: data.content }, note);
     let content = createPre({ className: "note-content" }, note);
     title.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
@@ -125,18 +119,15 @@ function createNote(data, id) {
     title.addEventListener("focusout", () => {
         saveNoteContainer(container);
         SessionToLocal();
-        // LocalToCloud();
     });
     content.addEventListener("focusout", () => {
         saveNoteContainer(container);
         SessionToLocal();
-        // LocalToCloud();
     });
 
     let button = createDiv({ className: "note-button" }, container, () => {
         removeNoteByElement(note);
         SessionToLocal();
-        // LocalToCloud();
     });
     createDiv({ className: "material-symbols-outlined small", textContent: 'close' }, button)
 
@@ -218,25 +209,6 @@ function LocalToWindow() {
     SessionToWindow();
     console.log("∴ Local to window")
 }
-
-// async function LocalToCloud() {
-//     let json = localStorage.getItem('savedNotes');
-//     const response = await fetch(cloudURL, {
-//         method: "PUT",
-//         headers: { "Content-Type": "application/json" },
-//         body: json
-//     });
-//     if (response.ok) {
-//         console.log(`Local to cloud`)
-//     }
-// }
-
-// async function WindowToCloud() {
-//     WindowToSession();
-//     SessionToLocal();
-//     await LocalToCloud();
-//     console.log("∴ Window to cloud")
-// }
 
 async function CloudToLocal(url) {
     const response = await fetch(url);
@@ -369,10 +341,6 @@ function populateToolbar() {
     let tools = new ToolbarContainer();
     tools.createButton(0, "keyboard_arrow_up", "Add New Note", null);
     tools.createButton(1, "add", "Add New Note", () => createBlankNote());
-
-    // tools.createButton(0, "link", "Show Notes JSON", () => showNotes());
-    // tools.createButton(2, "cloud_upload", "Save to Cloud", () => WindowToCloud());
-    // tools.createButton(2, "cloud_download", "Load from Cloud", () => CloudToWindow());
     tools.createButton(2, "save", "Save to Device", () => WindowToDevice());
     tools.createButton(3, "folder", "Load from Device", () => pullDeviceToWindow());
     tools.createButton(4, "delete_history", "Reset All Notes", () => resetAllNotes());
@@ -385,28 +353,6 @@ function populateToolbar() {
             alert(`Clipboard access denied, copy this link: ${oneTimeLink}`);
         }
     });
-    // tools.createButton(2, "link", "View Cloud", () => viewCloud());
-
-    // tools.createButton(3, "lock_person", "Debug Tools", () => alert("debug"));
-    // tools.createButton(3, "transition_push", "Window to Session", () => WindowToSession());
-    // tools.createButton(3, "hard_drive", "Session to Local", () => SessionToLocal());
-    // tools.createButton(3, "system_update_alt", "Local to Session", () => LocalToSession());
-    // tools.createButton(3, "system_update", "Session to Window", () => SessionToWindow());
-    // tools.createButton(3, "save", "Window to Local", () => WindowToLocal());
-    // tools.createButton(3, "folder", "Local to Window", () => LocalToWindow());
-    // tools.createButton(3, "cloud_upload", "Local to Cloud", () => LocalToCloud());
-    // tools.createButton(3, "cloud_download", "Cloud to Local", () => CloudToLocal());
-
-    // tools.createButton(4, "folder", "A1");
-    // tools.createButton(4, "save", "A1");
-    // tools.createButton(4, "remove", "A1");
-    // tools.createButton(4, "delete", "A1");
-    // tools.createButton(4, "close", "A1");
-    // tools.createButton(4, "sort_by_alpha", "A1");
-    // tools.createButton(4, "edit", "A1");
-    // tools.createButton(4, "sort", "A1");
-    // tools.createButton(4, "logout", "A1");
-    // tools.createButton(4, "check", "A1");
 }
 
 // Initialisation function
@@ -424,12 +370,12 @@ function main() {
             console.log('Pressed Cancel');
             alert('Pressed Cancel');
         }
-        const newURL = window.location.origin + window.location.pathname.remove("index");
+        const pathname = window.location.pathname;
+        const newURL = window.location.origin + pathname.replace('index', '');
         window.history.replaceState(null, '', newURL);
     }
 
     populateToolbar();
-    // CloudToWindow();
 
     if (localStorage.getItem('savedNotes') !== null) {
         LocalToWindow();
@@ -437,12 +383,6 @@ function main() {
     else {
         SessionToWindow();
     }
-
-    // async function save() {
-    //     await WindowToCloud();
-    //     let message = `Notes saved to cloud`;
-    //     alert(message);
-    // }
 
     function save() {
         SessionToLocal();
@@ -458,10 +398,6 @@ function main() {
     })
 
     setInterval(save, 30000);
-
-    // resetAllNotes();
-
-
 
 };
 
