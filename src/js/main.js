@@ -238,22 +238,22 @@ function LocalToWindow() {
 //     console.log("∴ Window to cloud")
 // }
 
-// async function CloudToLocal() {
-//     const response = await fetch(cloudURL);
-//     if (response.ok) {
-//         let data = await response.text();
-//         localStorage.setItem('savedNotes', data);
-//         console.log("Cloud to local");
-//     }
-// }
+async function CloudToLocal(url) {
+    const response = await fetch(url);
+    if (response.ok) {
+        let data = await response.text();
+        localStorage.setItem('savedNotes', data);
+        console.log("Cloud to local");
+    }
+}
 
-// async function CloudToWindow() {
-//     await CloudToLocal();
-//     LocalToSession();
-//     SessionToWindow();
-//     console.log(JSON.stringify(notes, null, 2))
-//     console.log("∴ Cloud to window")
-// }
+async function CloudToWindow(url) {
+    await CloudToLocal(url);
+    LocalToSession();
+    SessionToWindow();
+    console.log(JSON.stringify(notes, null, 2))
+    console.log("∴ Cloud to window")
+}
 
 function pullDeviceToWindow() {
     const input = document.createElement('input');
@@ -417,17 +417,14 @@ function main() {
         if (confirm('Cloud load removes current notes, press Cancel if this was a mistake')) {
             console.log('Pressed OK');
             alert('Pressed OK');
+            let url = `${cloudBase}${oneTimeLink}`;
+            alert(url);
+            CloudToWindow(url);
         } else {
             console.log('Pressed Cancel');
             alert('Pressed Cancel');
         }
-        let currentURL = window.location.href;
-        alert(currentURL);
-        const params = new URLSearchParams(window.location.search);
-        alert(`Query string (before):\t ${params}`);
-        params.delete("otl");
-        const newURL = window.location.origin + window.location.pathname;
-        alert(`Query string (after):\t ${params}`);
+        const newURL = window.location.origin + window.location.pathname.remove("index");
         window.history.replaceState(null, '', newURL);
     }
 
