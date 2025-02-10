@@ -3,13 +3,20 @@
 // =========================================================
 
 let page = document.getElementById("page");
+let mainButton;
 let cloudBase = "https://jsonblob.com/api/jsonBlob/"
 var defaultNotes = {
     1: {
         title: "Welcome to StickyNotes",
         created: '2024-02-08T14:45:30.123Z',
         modified: '2024-02-08T14:45:30.123Z',
-        content: `<div><span style="background-color: var(--note-colour); color: var(--foreground-colour); font-family: var(--font-family); font-weight: var(--font-weight);">- Notes flash when saved</span></div><div>- Open toolbar via ^ button</div><div>- Dele<span style="background-color: var(--note-colour); color: var(--foreground-colour); font-family: var(--font-family); font-weight: var(--font-weight);">te note via x button</span></div><div><br></div><div>Autosaves Happen:</div><div>- When you switch notes</div>- Every 30s`
+        content: `<div>- Open toolbar via ^ button
+- Delete note via x button
+
+Autosave Information:
+- ^ flashes when saving
+- Saves if switching notes
+- Saves every 30s</div>`
     },
 };
 var notes = JSON.parse(JSON.stringify(defaultNotes));
@@ -84,12 +91,9 @@ function removeNoteById(noteId) {
 // Remove a note by its element
 function removeNoteByElement(note) {
     delete notes[note.dataset.id];
-    note.style.transition = "background 0.1s";
+    note.style.transition = "background 0.2s";
     note.style.background = "rgba(0, 0, 0, 0.2)";
-    setTimeout(() => {
-        setTimeout(() => note.parentNode.remove(), 100);
-    }, 100);
-
+    setTimeout(() => note.parentNode.remove(), 400);
 }
 
 // Show current notes as a stringified alert
@@ -139,7 +143,7 @@ function saveNoteContainer(noteContainer, modifying = true) {
     let id = noteElement.dataset.id;
     let title = noteElement.querySelector(".note-title").textContent;
     let content = noteElement.querySelector(".note-content").innerHTML;
-    console.log(content);
+    // console.log(content);
     let noteData = notes[id];
     noteData.title = title;
     noteData.content = content;
@@ -166,14 +170,11 @@ function WindowToSession() {
 }
 
 function SessionToLocal() {
-    let elements = document.querySelectorAll(".note");
-    for (const element of elements) {
-        element.style.transition = "background 0.1s";
-        element.style.background = "rgba(0, 255, 255, 0.2)";
-        setTimeout(() => {
-            setTimeout(() => element.style.background = "", 100);
-        }, 100);
-    }
+    mainButton.style.transition = "color 0.5s";
+    mainButton.style.color = "rgba(0, 255, 0, 0.8)";
+    setTimeout(() => {
+        mainButton.style.color = "";
+    }, 500);
     localStorage.setItem('savedNotes', JSON.stringify(notes));
     console.log("Session to local");
 }
@@ -218,14 +219,33 @@ async function CloudToWindow(url) {
     await CloudToLocal(url);
     LocalToSession();
     SessionToWindow();
-    console.log(JSON.stringify(notes, null, 2))
-    console.log("∴ Cloud to window")
+    // console.log(JSON.stringify(notes, null, 2));
+    console.log("∴ Cloud to window");
 }
 
-function pullDeviceToWindow() {
+// function DeviceToWindow() {
+//     const input = document.createElement('input');
+//     input.type = 'file';
+//     input.accept = '.json';
+//     input.onchange = () => {
+//         const file = input.files[0];
+//         if (file) {
+//             const reader = new FileReader();
+//             reader.onload = () => {
+//                 let result = reader.result;
+//                 notes = JSON.parse(result);
+//                 SessionToWindow();
+//             };
+//             reader.readAsText(file);
+//         }
+//     };
+//     input.click();
+// }
+
+function DeviceToWindow() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json';
+    input.accept = '.json,application/json';
     input.onchange = () => {
         const file = input.files[0];
         if (file) {
@@ -240,6 +260,7 @@ function pullDeviceToWindow() {
     };
     input.click();
 }
+
 
 function WindowToDevice() {
     WindowToSession();
@@ -257,6 +278,12 @@ function WindowToDevice() {
 // !========================================================
 // ! Experimental
 // !========================================================
+
+function save() {
+    SessionToLocal();
+    let message = `Notes saved to local`;
+    console.log(message);
+}
 
 const copyToClipboard = async (text) => {
     try {
@@ -286,7 +313,14 @@ async function getOneTimeLink() {
     if (response.status === 201) {
         const location = response.headers.get('Location');
         const userID = location.split('/').pop();
-        return `https://scarletti-ben.github.io/StickyNotes/?otl=${userID}`;
+        // let link = `https://scarletti-ben.github.io/StickyNotes/?otl=${userID}`;
+        const pathname = window.location.pathname;
+        const origin = window.location.origin;
+        alert(pathname);
+        alert(origin);
+        let link = `${origin}${pathname}?otl=${userID}`
+        alert(link)
+        return link;
     }
 }
 
@@ -341,12 +375,17 @@ class ToolbarContainer {
 // Create the ToolBar container and populate with buttons / functionality
 function populateToolbar() {
     let tools = new ToolbarContainer();
-    tools.createButton(0, "keyboard_arrow_up", "Add New Note", null);
+    tools.createButton(0, "keyboard_arrow_up", null, null);
     tools.createButton(1, "add", "Add New Note", () => createBlankNote());
-    tools.createButton(2, "save", "Save to Device", () => WindowToDevice());
-    tools.createButton(3, "folder", "Load from Device", () => pullDeviceToWindow());
-    tools.createButton(4, "delete_history", "Reset All Notes", () => resetAllNotes());
-    tools.createButton(5, "cloud_upload", "Share Notes", async () => {
+    tools.createButton(2, "save", "Manual Save", () => save());
+    tools.createButton(3, "download", "Save to Device", () => WindowToDevice());
+    tools.createButton(4, "folder", "Load from Device", () => {
+        alert("Loading on Mobile is quirky\n- Select 'Photos and videos' on Android\n- Look for .json file in downloads folder")
+        DeviceToWindow();
+        WindowToLocal();
+    });
+    tools.createButton(5, "delete_history", "Reset All Notes", () => resetAllNotes());
+    tools.createButton(6, "cloud_upload", "Share Notes", async () => {
         let oneTimeLink = await getOneTimeLink();
         if (copyToClipboard(oneTimeLink)) {
             alert(`One time link copied to clipboard:\n${oneTimeLink}`);
@@ -360,6 +399,10 @@ function populateToolbar() {
 // Initialisation function
 function main() {
 
+    populateToolbar();
+
+    mainButton = document.getElementById("toolbar-container").firstElementChild.firstElementChild.firstElementChild;
+
     let oneTimeLink = checkURLParameters();
     if (oneTimeLink) {
         let message = 'Cloud load removes current notes, press Cancel if this was a mistake';
@@ -369,6 +412,7 @@ function main() {
             let url = `${cloudBase}${oneTimeLink}`;
             console.log(url);
             CloudToWindow(url);
+            WindowToLocal();
             if (destroyCloud(url)) {
                 console.log(`OTL ${url} destroyed`)
             }
@@ -379,11 +423,11 @@ function main() {
             console.log('Pressed Cancel');
         }
         const pathname = window.location.pathname;
-        const newURL = window.location.origin + pathname.replace('index', '');
+        // const newURL = window.location.origin + pathname.replace('index', '');
+        const newURL = window.location.origin + pathname;
         window.history.replaceState(null, '', newURL);
     }
 
-    populateToolbar();
 
     if (localStorage.getItem('savedNotes') !== null) {
         LocalToWindow();
@@ -392,11 +436,7 @@ function main() {
         SessionToWindow();
     }
 
-    function save() {
-        SessionToLocal();
-        let message = `Notes saved to local`;
-        console.log(message);
-    }
+
 
     document.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.key === 's') {
@@ -404,6 +444,18 @@ function main() {
             save();
         }
     })
+
+    const toolbarContainer = document.getElementById('toolbar-container');
+
+    document.addEventListener('click', (event) => {
+        if (!toolbarContainer.contains(event.target)) {
+            event.stopPropagation();
+            toolbarContainer.classList.remove('open');
+        }
+        else {
+            toolbarContainer.classList.toggle('open');
+        }
+    });
 
     setInterval(save, 30000);
 
