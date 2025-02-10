@@ -33,6 +33,10 @@ Reduced functionality to reduce visual clutter and be fit for sharing, and alter
 - ~~Handle failed OTLs~~
 - ~~Disable stylying for `pre` innerHTMl~~
 - ~~Fullscreen a note functionality~~
+- Clean code
+- Docstrings
+- Readme cleanup
+- Make permanent
 
 # Possible TODO
 - Make lite an offshoot url of main site

@@ -419,14 +419,15 @@ function populateToolbar() {
     tools.createButton(0, "keyboard_arrow_up", null, null);
     tools.createButton(1, "add", "Add New Note", () => createBlankNote());
     tools.createButton(2, "save", "Manual Save", () => save());
+    tools.createButton(3, "more_vert", "More Tools", null);
     tools.createButton(3, "download", "Save to Device", () => WindowToDevice());
-    tools.createButton(4, "folder", "Load from Device", () => {
+    tools.createButton(3, "folder", "Load from Device", () => {
         alert("Loading on Mobile is quirky\n- Select 'Photos and videos' on Android\n- Look for .json file in downloads folder")
         DeviceToWindow();
         WindowToLocal();
     });
-    tools.createButton(5, "delete_history", "Reset All Notes", () => resetAllNotes());
-    tools.createButton(6, "cloud_upload", "Share Notes", async () => {
+    tools.createButton(3, "delete_history", "Reset All Notes", () => resetAllNotes());
+    tools.createButton(3, "cloud_upload", "Share Notes", async () => {
         let oneTimeLink = await getOneTimeLink();
         if (copyToClipboard(oneTimeLink)) {
             alert(`One time link copied to clipboard:\n${oneTimeLink}`);
@@ -435,7 +436,7 @@ function populateToolbar() {
             alert(`Clipboard access denied, copy this link: ${oneTimeLink}`);
         }
     });
-    tools.createButton(7, "open_in_full", "Toggle Expanding Notes", () => expanding = !expanding);
+    tools.createButton(3, "open_in_full", "Toggle Expanding Notes", () => expanding = !expanding);
 }
 
 // Initialisation function
