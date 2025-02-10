@@ -4,7 +4,6 @@
 
 let page = document.getElementById("page");
 let cloudBase = "https://jsonblob.com/api/jsonBlob/"
-let cloudURL = "https://jsonblob.com/api/jsonBlob/1338142578419359744";
 var defaultNotes = {
     1: {
         title: "Welcome to StickyNotes",
@@ -152,10 +151,6 @@ function saveNoteContainer(noteContainer, modifying = true) {
     console.log(`Saved note ${id}`);
 }
 
-function viewCloud() {
-    window.open(cloudURL, '_blank');
-}
-
 // =========================================================
 // Push and Pull Functionality
 // =========================================================
@@ -290,8 +285,7 @@ async function getOneTimeLink() {
     if (response.status === 201) {
         const location = response.headers.get('Location');
         const userID = location.split('/').pop();
-        // return `${cloudBase}${userID}`;
-        return `https://scarletti-ben.github.io/StickyNotes/index?otl=${userID}`;
+        return `https://scarletti-ben.github.io/StickyNotes/?otl=${userID}`;
     }
 }
 
@@ -300,6 +294,13 @@ function checkURLParameters() {
     const value = params.get("otl");
     if (value && /^\d+$/.test(value)) {
         return value;
+    }
+}
+
+async function destroyCloud(url) {
+    const response = await fetch(url, { method: 'DELETE' });
+    if (response.status === 200) {
+        return true;
     }
 }
 
@@ -360,15 +361,21 @@ function main() {
 
     let oneTimeLink = checkURLParameters();
     if (oneTimeLink) {
-        if (confirm('Cloud load removes current notes, press Cancel if this was a mistake')) {
+        let message = 'Cloud load removes current notes, press Cancel if this was a mistake';
+        
+        if (confirm(message)) {
             console.log('Pressed OK');
-            alert('Pressed OK');
             let url = `${cloudBase}${oneTimeLink}`;
-            alert(url);
+            console.log(url);
             CloudToWindow(url);
+            if (destroyCloud(url)) {
+                console.log(`OTL ${url} destroyed`)
+            }
+            else {
+                console.log(`Error: OTL ${url} not destroyed`)
+            }
         } else {
             console.log('Pressed Cancel');
-            alert('Pressed Cancel');
         }
         const pathname = window.location.pathname;
         const newURL = window.location.origin + pathname.replace('index', '');

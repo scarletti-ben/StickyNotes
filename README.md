@@ -1,4 +1,4 @@
-# StickyNotes (Lite Branch)
+# StickyNotes (Lite Version)
 
 ## Overview
 Project to create a simple StickyNotes app with persistent local storage.
