@@ -319,7 +319,7 @@ async function getOneTimeLink() {
         const location = response.headers.get('Location');
         const userID = location.split('/').pop();
         // return `${cloudBase}${userID}`;
-        return `https://scarletti-ben.github.io/StickyNotes/index.html?otc=${userID}`;
+        return `https://scarletti-ben.github.io/StickyNotes/index.html?otl=${userID}`;
     }
 }
 
