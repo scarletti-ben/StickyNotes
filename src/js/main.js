@@ -28,7 +28,13 @@ var notes = JSON.parse(JSON.stringify(defaultNotes));
 // Functionality
 // =========================================================
 
-// Utility function for quick creation of a div element
+/**
+ * Creates and appends a div element to a parent
+ * @param options - Object with optional className, textContent, id, and title
+ * @param parent - Optional parent element to append to
+ * @param onClick - Optional event listener for the 'click' event
+ * @returns {HTMLElement} The created div element
+ */
 function createDiv(options = { className: "", textContent: "", id: "", title: "" }, parent = null, onClick = null) {
     let element = document.createElement("div");
     if (options.className) element.className = options.className;
@@ -40,7 +46,13 @@ function createDiv(options = { className: "", textContent: "", id: "", title: ""
     return element;
 }
 
-// Utility function for quick creation of element
+/**
+ * Creates and appends a textarea element to a parent
+ * @param options - Object with optional className, textContent, id, and title
+ * @param parent - Optional parent element to append to
+ * @param onClick - Optional event listener for the 'click' event
+ * @returns {HTMLTextAreaElement} The created textarea element
+ */
 function createTextArea(options = { className: "", textContent: "", id: "", title: "" }, parent = null, onClick = null) {
     let element = document.createElement("textarea");
     if (options.className) element.className = options.className;
@@ -52,7 +64,10 @@ function createTextArea(options = { className: "", textContent: "", id: "", titl
     return element;
 }
 
-// Get an ID greater than current maximum ID
+/**
+ * Generates a new note ID greater than the current maximum ID
+ * @returns {number} New note ID
+ */
 function getNewNoteID() {
     let ids = Object.keys(notes).map(id => parseInt(id));
     let maxID = Math.max(...ids);
@@ -61,14 +76,20 @@ function getNewNoteID() {
     return newID;
 }
 
-// Get ECMA date time string YYYY-MM-DDTHH:mm:ss.sssZ
+/**
+ * Generates the current date and time in ISO format 
+ * @returns {string} The current date YYYY-MM-DDTHH:mm:ss.sssZ
+ */
 function getDateString() {
     const date = new Date();
     const string = date.toISOString();
     return string;
 }
 
-// Create a blank note with new ID and add to global notes
+/**
+ * Creates a new blank note and adds it to the notes object
+ * @returns {HTMLElement} The created note element
+ */
 function createBlankNote() {
     let date = getDateString();
     let id = getNewNoteID();
@@ -83,14 +104,20 @@ function createBlankNote() {
     return output
 }
 
-// Remove a note by its ID
+/**
+ * Removes a note from the notes object and the DOM by its ID
+ * @param noteId - The ID of the note to remove
+ */
 function removeNoteById(noteId) {
     delete notes[noteId];
     const noteElement = document.querySelector(`[data-id='${noteId}']`);
     noteElement.parentNode.remove();
 }
 
-// Remove a note by its element
+/**
+ * Removes a note from the notes object and the DOM by its element
+ * @param note - The note element to remove
+ */
 function removeNoteByElement(note) {
     delete notes[note.dataset.id];
     note.style.transition = "background 0.2s";
@@ -98,20 +125,25 @@ function removeNoteByElement(note) {
     setTimeout(() => note.parentNode.remove(), 400);
 }
 
-// Show current notes as a stringified alert
+/**
+ * Displays the current notes object in an alert
+ */
 function showNotes() {
     alert(JSON.stringify(notes, null, 2));
 }
 
-// Create note from data and id
+/**
+ * Creates a note element from the given data and ID
+ * @param data - The note data including title, content, and timestamps
+ * @param id - The unique ID of the note
+ * @returns {HTMLElement} The created note element
+ */
 function createNote(data, id) {
     let container = createDiv({ className: "note-container" }, page)
     let note = createDiv({ className: "note" }, container);
     let title = createDiv({ className: "note-title", textContent: data.title }, note);
     title.spellcheck = false;
     let content = createTextArea({ className: "note-content" }, note);
-
-
 
     title.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
@@ -126,7 +158,7 @@ function createNote(data, id) {
     note.setAttribute('data-id', id);
 
     note.addEventListener("focusin", () => {
-        if (expanding){
+        if (expanding) {
             container.classList.toggle('expanded');
             tools.element.classList.toggle('hidden');
         }
@@ -134,7 +166,7 @@ function createNote(data, id) {
     });
 
     note.addEventListener("focusout", () => {
-        if (expanding){
+        if (expanding) {
             container.classList.toggle('expanded');
             tools.element.classList.toggle('hidden');
         }
@@ -143,23 +175,27 @@ function createNote(data, id) {
 
     title.addEventListener("focusout", () => {
         saveNoteContainer(container);
-        SessionToLocal();
+        VariablesToLocal();
     });
     content.addEventListener("focusout", () => {
         saveNoteContainer(container);
-        SessionToLocal();
+        VariablesToLocal();
     });
 
     let button = createDiv({ className: "note-button" }, container, () => {
         removeNoteByElement(note);
-        SessionToLocal();
+        VariablesToLocal();
     });
     createDiv({ className: "material-symbols-outlined small", textContent: 'close' }, button)
 
     return note
 }
 
-// Save a note element, keep date created the same
+/**
+ * Saves the current state of a note container
+ * @param noteContainer - The container of the note to save
+ * @param modifying - Whether the note is being modified (default true)
+ */
 function saveNoteContainer(noteContainer, modifying = true) {
     let noteElement = noteContainer.children[0];
     let id = noteElement.dataset.id;
@@ -180,53 +216,76 @@ function saveNoteContainer(noteContainer, modifying = true) {
 // Push and Pull Functionality
 // =========================================================
 
-function WindowToSession() {
+/**
+ * Saves all notes to variables
+ */
+function WindowToVariables() {
     let noteContainers = document.querySelectorAll(".note-container");
     let n = 0;
     for (const noteContainer of noteContainers) {
         saveNoteContainer(noteContainer, false);
         n++;
     }
-    console.log("Window to session");
+    console.log("Window to variables");
 }
 
-function SessionToLocal() {
+/**
+ * Saves notes from variables to localStorage
+ */
+function VariablesToLocal() {
     mainButton.style.transition = "color 0.5s";
     mainButton.style.color = "rgba(0, 255, 0, 0.8)";
     setTimeout(() => {
         mainButton.style.color = "";
     }, 500);
     localStorage.setItem('savedNotes', JSON.stringify(notes));
-    console.log("Session to local");
+    console.log("Variables to local");
 }
 
+/**
+ * Saves notes from the window and variables to localStorage
+ */
 function WindowToLocal() {
-    WindowToSession();
-    SessionToLocal();
+    WindowToVariables();
+    VariablesToLocal();
     console.log("∴ Window to local")
 }
 
-function LocalToSession() {
+/**
+ * Loads notes from localStorage into variables
+ */
+function LocalToVariables() {
     let saved = localStorage.getItem('savedNotes');
     notes = JSON.parse(saved);
-    console.log("Local to session");
+    console.log("Local to variables");
 }
 
-function SessionToWindow() {
+/**
+ * Loads notes from variables into the window
+ */
+function VariablesToWindow() {
     const noteContainers = page.querySelectorAll('.note-container');
     noteContainers.forEach(note => note.remove());
     for (const [id, noteData] of Object.entries(notes)) {
         createNote(noteData, id);
     }
-    console.log("Session to window");
+    console.log("Variables to window");
 }
 
+/**
+ * Loads notes from localStorage to variables, then into the window
+ */
 function LocalToWindow() {
-    LocalToSession();
-    SessionToWindow();
+    LocalToVariables();
+    VariablesToWindow();
     console.log("∴ Local to window")
 }
 
+/**
+ * Fetches notes from the cloud and saves them to localStorage
+ * @param url - The URL to fetch data from
+ * @returns {Promise<boolean>} Whether the fetch was successful
+ */
 async function CloudToLocal(url) {
     try {
         const response = await fetch(url);
@@ -247,11 +306,16 @@ async function CloudToLocal(url) {
     }
 }
 
+/**
+ * Loads notes from the cloud to the window
+ * @param url - The URL to fetch data from
+ * @returns {Promise<boolean>} Whether the operation was successful
+ */
 async function CloudToWindow(url) {
     let success = await CloudToLocal(url);
     if (success) {
-        LocalToSession();
-        SessionToWindow();
+        LocalToVariables();
+        VariablesToWindow();
         console.log("∴ Cloud to window");
         return true
     }
@@ -261,6 +325,9 @@ async function CloudToWindow(url) {
 
 }
 
+/**
+ * Prompts the user to select a file to load notes from
+ */
 function DeviceToWindow() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -272,7 +339,7 @@ function DeviceToWindow() {
             reader.onload = () => {
                 let result = reader.result;
                 notes = JSON.parse(result);
-                SessionToWindow();
+                VariablesToWindow();
             };
             reader.readAsText(file);
         }
@@ -280,9 +347,12 @@ function DeviceToWindow() {
     input.click();
 }
 
+/**
+ * Downloads the notes to the device as a JSON file
+ */
 function WindowToDevice() {
-    WindowToSession();
-    SessionToLocal();
+    WindowToVariables();
+    VariablesToLocal();
     let name = getDateString() + '.json'
     let content = JSON.stringify(notes, null, 2)
     const blob = new Blob([content], { type: 'application/json' });
@@ -297,12 +367,20 @@ function WindowToDevice() {
 // ! Experimental
 // !========================================================
 
+/**
+ * Saves the current state of the notes
+ */
 function save() {
-    SessionToLocal();
+    VariablesToLocal();
     let message = `Notes saved to local`;
     console.log(message);
 }
 
+/**
+ * Copies the provided text to the clipboard
+ * @param text - The text to copy
+ * @returns {Promise<void>}
+ */
 const copyToClipboard = async (text) => {
     try {
         await navigator.clipboard.writeText(text);
@@ -311,17 +389,24 @@ const copyToClipboard = async (text) => {
     }
 };
 
+/**
+ * Resets all notes to the default state
+ */
 function resetAllNotes() {
     if (confirm('Reset is permanent, press cancel if this was a mistake')) {
         console.log('Pressed OK');
         notes = JSON.parse(JSON.stringify(defaultNotes));
-        SessionToLocal();
-        SessionToWindow();
+        VariablesToLocal();
+        VariablesToWindow();
     } else {
         console.log('Pressed Cancel');
     }
 }
 
+/**
+ * Generates a one-time link for sharing notes
+ * @returns {Promise<string>} The one-time link
+ */
 async function getOneTimeLink() {
     const response = await fetch(cloudBase, {
         method: 'POST',
@@ -338,6 +423,10 @@ async function getOneTimeLink() {
     }
 }
 
+/**
+ * Checks the URL for the presence of a one-time link
+ * @returns {string|null} The one-time link if found
+ */
 function checkURLParameters() {
     const params = new URLSearchParams(window.location.search);
     const value = params.get("otl");
@@ -346,6 +435,11 @@ function checkURLParameters() {
     }
 }
 
+/**
+ * Destroys a cloud link by sending a DELETE request
+ * @param url - The URL to delete
+ * @returns {Promise<boolean>} Whether the deletion was successful
+ */
 async function destroyCloud(url) {
     const response = await fetch(url, { method: 'DELETE' });
     if (response.status === 200) {
@@ -362,12 +456,20 @@ class ToolbarContainer {
         this.element = document.getElementById('toolbar-container');
     }
 
-    // Add row to the toolbar
+    /**
+     * Adds a new row to the toolbar
+     */
     addRow() {
         createDiv({ className: "toolbar-row" }, this.element);
     }
 
-    // Create and add a button to a given row index
+    /**
+     * Creates a button and adds it to a specified row
+     * @param rowIndex - The index of the row to add the button to
+     * @param iconCode - The icon code for the button
+     * @param tooltipText - The tooltip text for the button
+     * @param onClick - The function to execute on button click (optional)
+     */
     createButton(rowIndex, iconCode, tooltipText, onClick = null) {
         let rows = this.element.children.length;
         if (rowIndex >= rows) {
@@ -386,7 +488,9 @@ class ToolbarContainer {
 // Initialisation Functions
 // =========================================================
 
-// Create the ToolBar container and populate with buttons / functionality
+/**
+ * Populates the toolbar with necessary buttons and their functionality
+ */
 function populateToolbar() {
     tools = new ToolbarContainer();
     tools.createButton(0, "keyboard_arrow_up", null, null);
@@ -412,7 +516,9 @@ function populateToolbar() {
     tools.createButton(3, "open_in_full", "Toggle Expanding Notes", () => expanding = !expanding);
 }
 
-// Initialisation function
+/**
+ * Main initialisation function to set up the application
+ */
 async function main() {
 
     populateToolbar();
@@ -451,7 +557,7 @@ async function main() {
         LocalToWindow();
     }
     else {
-        SessionToWindow();
+        VariablesToWindow();
     }
 
     document.addEventListener("keydown", (e) => {

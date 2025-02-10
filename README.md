@@ -5,6 +5,8 @@ Project to create a simple StickyNotes app with persistent local storage.
 
 Reduced functionality to reduce visual clutter and be fit for sharing, and altered cloud storage to be a simple share function via `One Time Link` (`OTL`).
 
+Docstrings for functions auto-generated so I assume some issues.
+
 # Features
 - Notes are autosaved to `localstorage`
 - Notes load from `localstorage` when page loads
