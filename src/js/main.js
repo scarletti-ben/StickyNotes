@@ -426,7 +426,7 @@ function main() {
         const params = new URLSearchParams(window.location.search);
         alert(`Query string (before):\t ${params}`);
         params.delete("otl");
-        const newURL = window.location.origin + window.location.pathname + '?' + params.toString();
+        const newURL = window.location.origin + window.location.pathname;
         alert(`Query string (after):\t ${params}`);
         window.history.replaceState(null, '', newURL);
     }
