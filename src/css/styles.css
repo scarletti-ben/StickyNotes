@@ -148,21 +148,13 @@ textarea {
     z-index: 9999;
 }
 
-/* #toolbar-container.open {
-    overflow: visible;
-} */
-
-/* #toolbar-container.open> :first-child> :first-child {
-    transform: rotate(180deg);
-} */
-
 #toolbar-container:hover {
     overflow: visible;
 }
 
-#toolbar-container > :first-child:hover > * {
+/* #toolbar-container > :first-child:hover > * {
     transform: rotate(180deg);
-}
+} */
 
 .toolbar-row {
     height: 48px;
@@ -311,7 +303,7 @@ textarea {
         user-select: none;
     }
 
-    #toolbar-container:hover> :first-child> :first-child {
+    /* #toolbar-container:hover> :first-child> :first-child {
         transform: rotate(180deg);
-    }
+    } */
 }

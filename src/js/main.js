@@ -59,7 +59,6 @@ function getNewNoteID() {
     let newID = maxID + 1
     console.log(`New ID generated ${newID}`)
     return newID;
-    // return 1;
 }
 
 // Get ECMA date time string YYYY-MM-DDTHH:mm:ss.sssZ
@@ -166,7 +165,6 @@ function saveNoteContainer(noteContainer, modifying = true) {
     let id = noteElement.dataset.id;
     let title = noteElement.querySelector(".note-title").textContent;
     let content = noteElement.querySelector(".note-content").value;
-    // console.log(content);
     let noteData = notes[id];
     noteData.title = title;
     noteData.content = content;
@@ -254,7 +252,6 @@ async function CloudToWindow(url) {
     if (success) {
         LocalToSession();
         SessionToWindow();
-        // console.log(JSON.stringify(notes, null, 2));
         console.log("∴ Cloud to window");
         return true
     }
@@ -263,25 +260,6 @@ async function CloudToWindow(url) {
     }
 
 }
-
-// function DeviceToWindow() {
-//     const input = document.createElement('input');
-//     input.type = 'file';
-//     input.accept = '.json';
-//     input.onchange = () => {
-//         const file = input.files[0];
-//         if (file) {
-//             const reader = new FileReader();
-//             reader.onload = () => {
-//                 let result = reader.result;
-//                 notes = JSON.parse(result);
-//                 SessionToWindow();
-//             };
-//             reader.readAsText(file);
-//         }
-//     };
-//     input.click();
-// }
 
 function DeviceToWindow() {
     const input = document.createElement('input');
@@ -301,7 +279,6 @@ function DeviceToWindow() {
     };
     input.click();
 }
-
 
 function WindowToDevice() {
     WindowToSession();
@@ -354,13 +331,9 @@ async function getOneTimeLink() {
     if (response.status === 201) {
         const location = response.headers.get('Location');
         const userID = location.split('/').pop();
-        // let link = `https://scarletti-ben.github.io/StickyNotes/?otl=${userID}`;
         const pathname = window.location.pathname;
         const origin = window.location.origin;
-        // alert(pathname);
-        // alert(origin);
         let link = `${origin}${pathname}?otl=${userID}`
-        // alert(link);
         return link;
     }
 }
@@ -469,7 +442,6 @@ async function main() {
             console.log('Pressed Cancel');
         }
         const pathname = window.location.pathname;
-        // const newURL = window.location.origin + pathname.replace('index', '');
         const newURL = window.location.origin + pathname;
         window.history.replaceState(null, '', newURL);
     }
@@ -490,16 +462,6 @@ async function main() {
     })
 
     const toolbarContainer = document.getElementById('toolbar-container');
-
-    // document.addEventListener('click', (event) => {
-    //     if (!toolbarContainer.contains(event.target)) {
-    //         event.stopPropagation();
-    //         toolbarContainer.classList.remove('open');
-    //     }
-    //     else {
-    //         toolbarContainer.classList.toggle('open');
-    //     }
-    // });
 
     setInterval(save, 30000);
 
