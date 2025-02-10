@@ -491,17 +491,15 @@ async function main() {
 
     const toolbarContainer = document.getElementById('toolbar-container');
 
-    document.addEventListener('click', (event) => {
-        if (!toolbarContainer.contains(event.target)) {
-            event.stopPropagation();
-            toolbarContainer.classList.remove('open');
-        }
-        else {
-            toolbarContainer.classList.toggle('open');
-        }
-    });
-
-
+    // document.addEventListener('click', (event) => {
+    //     if (!toolbarContainer.contains(event.target)) {
+    //         event.stopPropagation();
+    //         toolbarContainer.classList.remove('open');
+    //     }
+    //     else {
+    //         toolbarContainer.classList.toggle('open');
+    //     }
+    // });
 
     setInterval(save, 30000);
 

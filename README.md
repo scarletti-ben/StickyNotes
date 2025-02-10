@@ -37,6 +37,7 @@ Reduced functionality to reduce visual clutter and be fit for sharing, and alter
 - Docstrings
 - Readme cleanup
 - Make permanent
+- Local font file
 
 # Possible TODO
 - Make lite an offshoot url of main site
