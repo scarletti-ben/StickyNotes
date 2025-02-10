@@ -411,6 +411,9 @@ function populateToolbar() {
 
 // Initialisation function
 function main() {
+
+    checkURLParameters();
+
     populateToolbar();
     // CloudToWindow();
 
@@ -443,6 +446,8 @@ function main() {
     setInterval(save, 30000);
 
     // resetAllNotes();
+
+    
 
 };
 
