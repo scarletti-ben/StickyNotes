@@ -17,7 +17,9 @@
     font-family: 'Material Symbols Outlined';
     font-style: normal;
     font-weight: 100 700;
-    src: url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v226/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsI.woff2) format('woff2');
+    src: url(/StickyNotes/material-symbols-outlined.woff2) format('woff2'), 
+    url(../../material-symbols-outlined.woff2) format('woff2'), 
+    url(https://fonts.gstatic.com/s/materialsymbolsoutlined/v226/kJEhBvYX7BgnkSrUwT8OhrdQw4oELdPIeeII9v6oFsI.woff2) format('woff2');
 }
 
 .material-symbols-outlined {
@@ -99,6 +101,7 @@ textarea {
     box-sizing: border-box;
     user-select: none;
     background-color: transparent;
+    box-shadow: inset 0 0 0 var(--debug-outline) orange;
 }
 
 .note-container.expanded {
@@ -188,12 +191,15 @@ textarea {
 }
 
 .note-title {
+    padding: 0px;
     padding-right: 18px;
+    height: auto;
     box-sizing: border-box;
     box-shadow: inset 0 0 0 var(--debug-outline) orange;
     font-size: 16px;
-    -webkit-text-autocorrect: none;
-    -webkit-user-modify: read-write-plaintext-only;
+    display: inline-block;
+    /* -webkit-text-autocorrect: none;
+    -webkit-user-modify: read-write-plaintext-only; */
     margin: 0px 0px 8px 0px;
     box-shadow: inset 0 -1px grey;
 }
@@ -207,6 +213,7 @@ textarea {
 .note-content {
     font-size: 10px;
     flex-grow: 1;
+    box-sizing: border-box;
     overflow-y: auto;
     -webkit-text-autocorrect: none;
     -webkit-user-modify: read-write-plaintext-only;

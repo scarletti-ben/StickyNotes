@@ -7,26 +7,37 @@ let mainButton;
 let tools;
 let expanding = false;
 let cloudBase = "https://jsonblob.com/api/jsonBlob/"
+let defaultContent = `- Open menu via ^ button
+- Add note via + in menu
+- Delete note via x button
+- ^ flashes when saving
+- Autosaves every 30s
+- Manually save via menu
+- Control + S to save
+- Control + D to download`
 var defaultNotes = {
     1: {
         title: "Welcome to StickyNotes",
         created: '2024-02-08T14:45:30.123Z',
         modified: '2024-02-08T14:45:30.123Z',
-        content: `- Open toolbar via ^ button
-- Delete note via x button
-
-Autosave Information:
-- ^ flashes when saving
-- Saves if switching notes
-- Saves every 30s
-- Can manually save via menu`
+        content: defaultContent
     },
 };
+let beenWarned = false;
 var notes = JSON.parse(JSON.stringify(defaultNotes));
+const LOCALSTORAGE_ATTRIBUTE = 'savedNotes-2025-02-10';
+let activeNoteContainer;
+let lastFocusedElement;
 
 // =========================================================
 // Functionality
 // =========================================================
+
+// Simple replacement for alert / console.log
+function mobileAlert(text) {
+    let postit = document.querySelectorAll(".note-content")[0];
+    postit.value += '\n\n' + text;
+}
 
 /**
  * Creates and appends a div element to a parent
@@ -41,7 +52,10 @@ function createDiv(options = { className: "", textContent: "", id: "", title: ""
     if (options.textContent) element.textContent = options.textContent;
     if (options.id) element.id = options.id;
     if (options.title) element.title = options.title;
-    if (onClick) element.addEventListener('click', onClick);
+    if (onClick) element.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onClick();
+    });
     if (parent) parent.appendChild(element);
     return element;
 }
@@ -59,7 +73,31 @@ function createTextArea(options = { className: "", textContent: "", id: "", titl
     if (options.textContent) element.textContent = options.textContent;
     if (options.id) element.id = options.id;
     if (options.title) element.title = options.title;
-    if (onClick) element.addEventListener('click', onClick);
+    if (onClick) element.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onClick();
+    });
+    if (parent) parent.appendChild(element);
+    return element;
+}
+
+/**
+ * Creates and appends a text element to a parent
+ * @param options - Object with optional className, textContent, id, and title
+ * @param parent - Optional parent element to append to
+ * @param onClick - Optional event listener for the 'click' event
+ * @returns {HTMLTextAreaElement} The created textarea element
+ */
+function createText(options = { className: "", textContent: "", id: "", title: "" }, parent = null, onClick = null) {
+    let element = document.createElement("text");
+    if (options.className) element.className = options.className;
+    if (options.textContent) element.textContent = options.textContent;
+    if (options.id) element.id = options.id;
+    if (options.title) element.title = options.title;
+    if (onClick) element.addEventListener('click', (e) => {
+        e.stopPropagation();
+        onClick();
+    });
     if (parent) parent.appendChild(element);
     return element;
 }
@@ -148,42 +186,17 @@ function createNote(data, id) {
     title.addEventListener("keydown", (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            content.focus()
+            content.focus();
         }
     })
     content.spellcheck = false;
     content.value = data.content;
     title.contentEditable = true;
-    content.contentEditable = true;
     note.setAttribute('data-id', id);
-
-    note.addEventListener("focusin", () => {
-        if (expanding) {
-            container.classList.toggle('expanded');
-            tools.element.classList.toggle('hidden');
-        }
-        button.classList.toggle('hidden');
-    });
-
-    note.addEventListener("focusout", () => {
-        if (expanding) {
-            container.classList.toggle('expanded');
-            tools.element.classList.toggle('hidden');
-        }
-        button.classList.toggle('hidden');
-    });
-
-    title.addEventListener("focusout", () => {
-        saveNoteContainer(container);
-        VariablesToLocal();
-    });
-    content.addEventListener("focusout", () => {
-        saveNoteContainer(container);
-        VariablesToLocal();
-    });
 
     let button = createDiv({ className: "note-button" }, container, () => {
         removeNoteByElement(note);
+        setInterval(saveAllNotes, 3000);
         VariablesToLocal();
     });
     createDiv({ className: "material-symbols-outlined small", textContent: 'close' }, button)
@@ -238,7 +251,7 @@ function VariablesToLocal() {
     setTimeout(() => {
         mainButton.style.color = "";
     }, 500);
-    localStorage.setItem('savedNotes', JSON.stringify(notes));
+    localStorage.setItem(LOCALSTORAGE_ATTRIBUTE, JSON.stringify(notes));
     console.log("Variables to local");
 }
 
@@ -255,7 +268,7 @@ function WindowToLocal() {
  * Loads notes from localStorage into variables
  */
 function LocalToVariables() {
-    let saved = localStorage.getItem('savedNotes');
+    let saved = localStorage.getItem(LOCALSTORAGE_ATTRIBUTE);
     notes = JSON.parse(saved);
     console.log("Local to variables");
 }
@@ -297,7 +310,7 @@ async function CloudToLocal(url) {
             return false;
         }
         let data = await response.text();
-        localStorage.setItem('savedNotes', data);
+        localStorage.setItem(LOCALSTORAGE_ATTRIBUTE, data);
         console.log("Cloud to local");
         return true;
     } catch (error) {
@@ -370,7 +383,8 @@ function WindowToDevice() {
 /**
  * Saves the current state of the notes
  */
-function save() {
+function saveAllNotes() {
+    WindowToVariables();
     VariablesToLocal();
     let message = `Notes saved to local`;
     console.log(message);
@@ -381,9 +395,10 @@ function save() {
  * @param text - The text to copy
  * @returns {Promise<void>}
  */
-const copyToClipboard = async (text) => {
+async function copyToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
+        return true;
     } catch (err) {
         console.error("Failed to copy:", err);
     }
@@ -481,8 +496,60 @@ class ToolbarContainer {
         const row = this.element.children[rowIndex];
         const button = createDiv({ className: "toolbar-button", title: tooltipText }, row, onClick)
         createDiv({ className: "material-symbols-outlined", textContent: iconCode }, button)
+        return button;
     }
 }
+
+// =========================================================
+// Document Listeners
+// =========================================================
+
+// Single event listener for switching between notes
+document.addEventListener('click', (e) => {
+    let closestNoteContainer = e.target.closest('.note-container');
+
+    if (!closestNoteContainer) {
+        if (activeNoteContainer) {
+            console.log("clearing active container");
+
+            if (activeNoteContainer) {
+                var buttonA = activeNoteContainer.querySelector('.note-button');
+                if (buttonA) {
+                    buttonA.classList.remove('hidden');
+                }
+            }
+
+            if (expanding) {
+                activeNoteContainer.classList.remove('expanded');
+            }
+        };
+        activeNoteContainer = null;
+
+    } else if (closestNoteContainer !== activeNoteContainer) {
+        console.log("new container");
+
+        var buttonC = closestNoteContainer.querySelector('.note-button');
+        if (buttonC) {
+            buttonC.classList.add('hidden');
+        }
+
+        if (activeNoteContainer) {
+            var buttonA = activeNoteContainer.querySelector('.note-button');
+            if (buttonA) {
+                buttonA.classList.remove('hidden');
+            }
+        }
+
+        if (expanding) {
+            if (activeNoteContainer) {
+                activeNoteContainer.classList.remove('expanded');
+            }
+            closestNoteContainer.classList.add('expanded');
+        }
+        activeNoteContainer = closestNoteContainer;
+
+    }
+});
 
 // =========================================================
 // Initialisation Functions
@@ -494,9 +561,12 @@ class ToolbarContainer {
 function populateToolbar() {
     tools = new ToolbarContainer();
     tools.createButton(0, "keyboard_arrow_up", null, null);
-    tools.createButton(1, "add", "Add New Note", () => createBlankNote());
-    tools.createButton(2, "save", "Manual Save", () => save());
-    tools.createButton(3, "more_vert", "More Tools", null);
+    tools.createButton(1, "add", "Add New Note", () => {
+        createBlankNote();
+        setInterval(saveAllNotes, 3000);
+    });
+    tools.createButton(2, "save", "Manual Save", () => saveAllNotes());
+    tools.createButton(3, "more_vert", "More Tools", "", null);
     tools.createButton(3, "download", "Save to Device", () => WindowToDevice());
     tools.createButton(3, "folder", "Load from Device", () => {
         alert("Loading on Mobile is quirky\n- Select 'Photos and videos' on Android\n- Look for .json file in downloads folder")
@@ -504,16 +574,37 @@ function populateToolbar() {
         WindowToLocal();
     });
     tools.createButton(3, "delete_history", "Reset All Notes", () => resetAllNotes());
+
     tools.createButton(3, "cloud_upload", "Share Notes", async () => {
-        let oneTimeLink = await getOneTimeLink();
-        if (copyToClipboard(oneTimeLink)) {
-            alert(`One time link copied to clipboard:\n${oneTimeLink}`);
+        if (beenWarned) {
+            let oneTimeLink = await getOneTimeLink();
+            let copied = await copyToClipboard(oneTimeLink);
+            if (copied) {
+                alert(`One time link copied to clipboard:\n${oneTimeLink}`);
+            }
+            else {
+                alert(`Clipboard access denied by device, copy or write down this link: ${oneTimeLink}`);
+            }
         }
-        else {
-            alert(`Clipboard access denied, copy this link: ${oneTimeLink}`);
+        if (!beenWarned) {
+            let message = 'Cloud share generates a one time use link\n- Do not use this to share important or personal information\n- Opening the link  on another device will create a separate copy of all notes in this library on that device\n- Once the link is used, its data is deleted and it will no longer work\n\nThis message will only pop up once per session, pressing "Share Notes" will now work if you click it again';
+            alert(message);
+            beenWarned = true;
+        }
+
+    });
+
+    tools.createButton(3, "open_in_full", "Toggle Expanding Notes", () => {
+        expanding = !expanding;
+        if (activeNoteContainer) {
+            activeNoteContainer.classList.remove('expanded');
+            var buttonA = activeNoteContainer.querySelector('.note-button');
+            if (buttonA) {
+                buttonA.classList.remove('hidden');
+            }
+            activeNoteContainer = null;
         }
     });
-    tools.createButton(3, "open_in_full", "Toggle Expanding Notes", () => expanding = !expanding);
 }
 
 /**
@@ -553,7 +644,7 @@ async function main() {
     }
 
 
-    if (localStorage.getItem('savedNotes') !== null) {
+    if (localStorage.getItem(LOCALSTORAGE_ATTRIBUTE) !== null) {
         LocalToWindow();
     }
     else {
@@ -563,13 +654,32 @@ async function main() {
     document.addEventListener("keydown", (e) => {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
-            save();
+            saveAllNotes();
+        }
+        else if (e.ctrlKey && e.key === 'd') {
+            e.preventDefault();
+            saveAllNotes();
+            WindowToDevice();
         }
     })
 
-    const toolbarContainer = document.getElementById('toolbar-container');
+    mainButton.addEventListener('click', () => {
+        if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+        } else if (document.selection) {
+            document.selection.empty();
+        }
+    })
 
-    setInterval(save, 30000);
+    tools.element.addEventListener('click', () => {
+        if (window.getSelection) {
+            window.getSelection().removeAllRanges();
+        } else if (document.selection) {
+            document.selection.empty();
+        }
+    })
+
+    setInterval(saveAllNotes, 30000);
 
 };
 
